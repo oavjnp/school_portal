@@ -2,40 +2,49 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>School Portal</title>
   <style>
-    body{font-family:sans-serif;text-align:center;padding:60px 20px;color:#1f2328;background:#f6f8fa;}
-    h2{font-size:22px;margin-bottom:8px;}
-    p{color:#59636e;font-size:15px;}
-    a{color:#0969da;}
-    .offline{color:#cf222e;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{height:100%;overflow:hidden;background:#f6f8fa;}
+    #frame{position:fixed;inset:0;width:100%;height:100%;border:none;display:none;}
+    #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+            justify-content:center;font-family:sans-serif;color:#1f2328;gap:12px;}
+    #splash h2{font-size:20px;}
+    #splash p{font-size:14px;color:#59636e;}
+    .err{color:#cf222e !important;}
   </style>
 </head>
 <body>
-  <h2>🏫 Odisha Adarsha Vidyalaya</h2>
-  <p id="msg">Connecting to school portal…</p>
+  <div id="splash">
+    <h2>🏫 School Portal</h2>
+    <p id="msg">Connecting…</p>
+  </div>
+  <iframe id="frame" allow="camera;microphone"></iframe>
   <script>
     var token = new URLSearchParams(window.location.search).get("token");
     fetch("url.txt?t=" + Date.now())
-      .then(function(r){ return r.text(); })
+      .then(function(r){return r.text();})
       .then(function(url){
         url = url.trim();
-        if (!url || url.charAt(0) === "#") {
-          document.getElementById("msg").innerHTML =
-            "<span class=\"offline\">Server is currently offline.</span><br>Ask the admin to restart.";
+        if(!url || url.charAt(0)==="#"){
+          document.getElementById("msg").className="err";
+          document.getElementById("msg").textContent="Server is offline. Ask admin to restart.";
           return;
         }
         var dest = token
           ? url + "/teacher/auth?token=" + encodeURIComponent(token)
           : url + "/teacher";
-        document.getElementById("msg").innerHTML =
-          "Redirecting… <a href=\"" + dest + "\">" + dest + "</a>";
-        window.location.replace(dest);
+        var f = document.getElementById("frame");
+        f.src = dest;
+        f.onload = function(){
+          document.getElementById("splash").style.display="none";
+          f.style.display="block";
+        };
       })
       .catch(function(){
-        document.getElementById("msg").innerHTML =
-          "<span class=\"offline\">Server is offline or unreachable.</span>";
+        document.getElementById("msg").className="err";
+        document.getElementById("msg").textContent="Server offline or unreachable.";
       });
   </script>
 </body>
