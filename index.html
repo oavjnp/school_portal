@@ -2,49 +2,72 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="School Portal">
+  <meta name="theme-color" content="#0969da">
+  <link rel="manifest" href="manifest.json">
   <title>School Portal</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box;}
-    html,body{height:100%;overflow:hidden;background:#f6f8fa;}
-    #frame{position:fixed;inset:0;width:100%;height:100%;border:none;display:none;}
-    #splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
-            justify-content:center;font-family:sans-serif;color:#1f2328;gap:12px;}
-    #splash h2{font-size:20px;}
-    #splash p{font-size:14px;color:#59636e;}
-    .err{color:#cf222e !important;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:sans-serif;background:#f6f8fa;min-height:100vh;
+         display:flex;align-items:center;justify-content:center;}
+    .card{background:#fff;border:1px solid #d0d7de;border-radius:12px;
+          padding:32px 24px;text-align:center;max-width:340px;width:90%;
+          box-shadow:0 4px 16px rgba(0,0,0,.08);}
+    .icon{font-size:48px;margin-bottom:12px;}
+    h2{font-size:20px;color:#1f2328;margin-bottom:6px;}
+    .sub{font-size:14px;color:#59636e;margin-bottom:24px;}
+    .btn{display:block;width:100%;padding:13px;background:#0969da;color:#fff;
+         border:none;border-radius:8px;font-size:16px;font-weight:600;
+         cursor:pointer;text-decoration:none;margin-bottom:12px;}
+    .btn:hover{background:#0860ca;}
+    .hint{font-size:12px;color:#59636e;line-height:1.6;
+          border-top:1px solid #eee;padding-top:12px;margin-top:4px;}
+    .offline{color:#cf222e;font-size:14px;margin-top:8px;}
+    .loading{color:#59636e;font-size:14px;}
   </style>
 </head>
 <body>
-  <div id="splash">
-    <h2>🏫 School Portal</h2>
-    <p id="msg">Connecting…</p>
+  <div class="card">
+    <div class="icon">🏫</div>
+    <h2>School Portal</h2>
+    <div class="sub" id="sub">Odisha Adarsha Vidyalaya</div>
+    <a id="btn" class="btn" href="#" style="display:none">Open School Portal →</a>
+    <p id="status" class="loading">Checking server…</p>
+    <p class="hint" id="hint" style="display:none">
+      💡 <strong>Save this page</strong> to your home screen<br>
+      (⋮ menu → Add to Home Screen)<br>
+      so you can open the portal anytime<br>
+      without coming back to Discord.
+    </p>
   </div>
-  <iframe id="frame" allow="camera;microphone"></iframe>
   <script>
     var token = new URLSearchParams(window.location.search).get("token");
     fetch("url.txt?t=" + Date.now())
       .then(function(r){return r.text();})
       .then(function(url){
         url = url.trim();
+        var status = document.getElementById("status");
         if(!url || url.charAt(0)==="#"){
-          document.getElementById("msg").className="err";
-          document.getElementById("msg").textContent="Server is offline. Ask admin to restart.";
+          status.className="offline";
+          status.textContent="Server is offline — ask admin to restart.";
           return;
         }
         var dest = token
           ? url + "/teacher/auth?token=" + encodeURIComponent(token)
           : url + "/teacher";
-        var f = document.getElementById("frame");
-        f.src = dest;
-        f.onload = function(){
-          document.getElementById("splash").style.display="none";
-          f.style.display="block";
-        };
+        var btn = document.getElementById("btn");
+        btn.href = dest;
+        btn.style.display = "block";
+        status.style.display = "none";
+        document.getElementById("hint").style.display = "block";
       })
       .catch(function(){
-        document.getElementById("msg").className="err";
-        document.getElementById("msg").textContent="Server offline or unreachable.";
+        var status = document.getElementById("status");
+        status.className="offline";
+        status.textContent="Server offline or unreachable.";
       });
   </script>
 </body>
