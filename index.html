@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>School Portal</title>
+  <style>
+    body{font-family:sans-serif;text-align:center;padding:60px 20px;color:#1f2328;background:#f6f8fa;}
+    h2{font-size:22px;margin-bottom:8px;}
+    p{color:#59636e;font-size:15px;}
+    a{color:#0969da;}
+    .offline{color:#cf222e;}
+  </style>
+</head>
+<body>
+  <h2>🏫 Odisha Adarsha Vidyalaya</h2>
+  <p id="msg">Connecting to school portal…</p>
+  <script>
+    fetch('url.txt?t=' + Date.now())
+      .then(r => r.text())
+      .then(url => {
+        url = url.trim();
+        if (!url || url.startsWith('#')) {
+          document.getElementById('msg').innerHTML =
+            '<span class="offline">Server is currently offline.</span><br>Ask the admin to restart.';
+          return;
+        }
+        document.getElementById('msg').innerHTML =
+          'Redirecting… <a href="' + url + '/teacher">' + url + '/teacher</a>';
+        window.location.replace(url + '/teacher');
+      })
+      .catch(() => {
+        document.getElementById('msg').innerHTML =
+          '<span class="offline">Server is offline or unreachable.</span>';
+      });
+  </script>
+</body>
+</html>
