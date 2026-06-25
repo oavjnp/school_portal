@@ -25,6 +25,9 @@
     .btn:hover{background:#0860ca;}
     .hint{font-size:12px;color:#59636e;line-height:1.6;
           border-top:1px solid #eee;padding-top:12px;margin-top:4px;}
+    .debug{font-size:11px;color:#59636e;margin-top:16px;padding:8px;
+           background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;
+           text-align:left;word-break:break-all;line-height:1.7;}
     .offline{color:#cf222e;font-size:14px;margin-top:8px;}
     .loading{color:#59636e;font-size:14px;}
   </style>
@@ -33,9 +36,13 @@
   <div class="card">
     <div class="icon">🏫</div>
     <h2>School Portal</h2>
-    <div class="sub" id="sub">Odisha Adarsha Vidyalaya</div>
+    <div class="sub">Odisha Adarsha Vidyalaya</div>
     <a id="btn" class="btn" href="#" style="display:none">Open School Portal →</a>
     <p id="status" class="loading">Checking server…</p>
+    <div class="debug" id="debug" style="display:none">
+      <strong>url.txt:</strong> <span id="dbg-url"></span><br>
+      <strong>dest:</strong> <span id="dbg-dest"></span>
+    </div>
     <p class="hint" id="hint" style="display:none">
       💡 <strong>Save this page</strong> to your home screen<br>
       (⋮ menu → Add to Home Screen)<br>
@@ -45,8 +52,6 @@
   </div>
   <script>
     var token = new URLSearchParams(window.location.search).get("token");
-    // Fetch from raw.githubusercontent.com — updates immediately when committed,
-    // no GitHub Pages CDN propagation delay.
     var RAW = "https://raw.githubusercontent.com/jangyabhr/school_portal/main/url.txt";
     fetch(RAW + "?t=" + Date.now())
       .then(function(r){return r.text();})
@@ -61,6 +66,9 @@
         var dest = token
           ? url + "/teacher/auth?token=" + encodeURIComponent(token)
           : url + "/teacher";
+        document.getElementById("dbg-url").textContent = url;
+        document.getElementById("dbg-dest").textContent = dest;
+        document.getElementById("debug").style.display = "block";
         var btn = document.getElementById("btn");
         btn.href = dest;
         btn.style.display = "block";
