@@ -1,10 +1,53 @@
 <!DOCTYPE html>
-  <html><head><meta charset="UTF-8">
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="School Portal">
+  <meta name="theme-color" content="#0969da">
+  <title>Teacher Portal — Get Your Link</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:sans-serif;background:#f6f8fa;min-height:100vh;
+         display:flex;align-items:center;justify-content:center;}
+    .card{background:#fff;border:1px solid #d0d7de;border-radius:12px;
+          padding:32px 24px;text-align:center;max-width:340px;width:90%;
+          box-shadow:0 4px 16px rgba(0,0,0,.08);}
+    .icon{font-size:48px;margin-bottom:12px;}
+    h2{font-size:20px;color:#1f2328;margin-bottom:6px;}
+    .sub{font-size:14px;color:#59636e;margin-bottom:24px;}
+    .loading{color:#59636e;font-size:14px;}
+    .offline{color:#cf222e;font-size:14px;margin-top:8px;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">&#128106;</div>
+    <h2>Teacher Portal</h2>
+    <div class="sub">Getting your login page&#8230;</div>
+    <p id="status" class="loading">Checking server&#8230;</p>
+  </div>
   <script>
-  fetch('url.txt?_=' + Date.now())
-    .then(r => r.text())
-    .then(url => { window.location.replace(url.trim() +
-  '/teacher/login'); });
+    var API = "https://api.github.com/repos/jangyabhr/school_portal/contents/url.txt";
+    fetch(API, {headers: {"Accept": "application/vnd.github.raw+json", "X-GitHub-Api-Version": "2022-11-28"}})
+      .then(function(r){ return r.text(); })
+      .then(function(url){
+        url = url.trim();
+        if(!url || url.charAt(0) === "#"){
+          var s = document.getElementById("status");
+          s.className = "offline";
+          s.textContent = "Server is offline — ask admin to restart.";
+          return;
+        }
+        window.location.replace(url + "/teacher/login");
+      })
+      .catch(function(){
+        var s = document.getElementById("status");
+        s.className = "offline";
+        s.textContent = "Could not reach server — try again later.";
+      });
   </script>
-  <noscript>Enable JavaScript to continue.</noscript>
-  </head><body></body></html>
+</body>
+</html>
