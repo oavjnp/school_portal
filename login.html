@@ -1,78 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="School Portal">
-  <meta name="theme-color" content="#0969da">
-  <link rel="manifest" href="manifest.json">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Portal — Login</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-         background:#f6f8fa;color:#1f2328;min-height:100vh;
-         display:flex;align-items:center;justify-content:center;padding:24px;}
-    .card{background:#fff;border:1px solid #d0d7de;border-radius:10px;
-          padding:32px;width:100%;max-width:380px;
-          box-shadow:0 4px 16px rgba(0,0,0,.07);}
-    h1{font-size:1.2rem;margin-bottom:4px;}
-    .sub{color:#57606a;font-size:.88rem;margin-bottom:24px;}
-    label{display:block;font-size:.85rem;font-weight:600;margin-bottom:5px;}
-    input{width:100%;padding:9px 12px;border:1px solid #d0d7de;border-radius:6px;
-          font-size:1rem;background:#fff;outline:none;margin-bottom:16px;}
-    input:focus{border-color:#0969da;box-shadow:0 0 0 3px rgba(9,105,218,.15);}
-    button{width:100%;padding:10px;border:none;border-radius:6px;
-           background:#0969da;color:#fff;font-size:1rem;font-weight:600;
-           cursor:pointer;margin-top:4px;}
-    button:disabled{opacity:.55;cursor:default;}
-    .status{font-size:12px;color:#57606a;text-align:center;margin-top:10px;min-height:18px;}
-    .error{color:#cf222e;}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f8fa; color: #1f2328;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #fff; border: 1px solid #d0d7de; border-radius: 10px;
+      padding: 32px; width: 100%; max-width: 380px;
+    }
+    h1 { font-size: 1.2rem; margin-bottom: 4px; }
+    .sub { color: #57606a; font-size: .88rem; margin-bottom: 24px; }
+    label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: 5px; }
+    input[type=text], input[type=password] {
+      width: 100%; padding: 9px 12px; border: 1px solid #d0d7de; border-radius: 6px;
+      font-size: 1rem; background: #fff; outline: none;
+    }
+    input:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9,105,218,.15); }
+    .field { margin-bottom: 16px; }
+    .btn {
+      width: 100%; padding: 10px; border: none; border-radius: 6px;
+      background: #0969da; color: #fff; font-size: 1rem; font-weight: 600;
+      cursor: pointer; margin-top: 4px; transition: background .15s;
+    }
+    .btn:hover:not(:disabled) { background: #0860ca; }
+    .btn:disabled { background: #8ab4f8; cursor: not-allowed; }
+    .error {
+      margin-bottom: 16px; padding: 10px 14px; border-radius: 6px;
+      background: #fff0f0; border: 1px solid #ffc7ce; color: #cf222e; font-size: .9rem;
+    }
+    .status {
+      text-align: center; color: #57606a; font-size: .82rem; margin-top: 12px;
+      min-height: 18px;
+    }
+    #spinner { display: none; text-align: center; padding: 24px; color: #57606a; }
   </style>
 </head>
 <body>
 <div class="card">
-  <h1>&#128104;&#8205;&#127979; Teacher Portal</h1>
+  <h1>👨‍🏫 Teacher Portal</h1>
   <p class="sub">Odisha Adarsha Vidyalaya</p>
-  <form id="f" method="post">
-    <label for="name">Your name</label>
-    <input type="text" id="name" name="name" placeholder="e.g. Sujata Panda"
-           required autocomplete="name" autocorrect="off">
-    <label for="pwd">Password</label>
-    <input type="password" id="pwd" name="password"
-           required autocomplete="current-password">
-    <button type="submit" id="btn" disabled>Open Portal &rarr;</button>
-    <p class="status" id="st">Connecting&hellip;</p>
+
+  <div id="spinner">Signing you in automatically…</div>
+
+  <div id="errorBanner" class="error" style="display:none;"></div>
+
+  <form id="loginForm" style="display:none;" autocomplete="on">
+    <div class="field">
+      <label for="nameInput">Your name</label>
+      <input type="text" id="nameInput" name="name" placeholder="Start typing your name…"
+             list="nameList" autocomplete="name" required minlength="2">
+      <datalist id="nameList"></datalist>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password"
+             placeholder="Portal password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn" id="submitBtn" disabled>Connecting…</button>
+    <p class="status" id="statusLine"></p>
   </form>
 </div>
+
 <script>
-var API="https://api.github.com/repos/oavjnp/school_portal/contents/url.txt";
-fetch(API,{headers:{"Accept":"application/vnd.github.raw+json","X-GitHub-Api-Version":"2022-11-28"}})
-  .then(function(r){return r.text();})
-  .then(function(url){
-    url=url.trim();
-    var st=document.getElementById("st");
-    var btn=document.getElementById("btn");
-    if(!url||url.charAt(0)==="#"){
-      st.className="status error";
-      st.textContent="Server offline — ask admin to restart.";
-      return;
+(async function () {
+  const LS_TOKEN    = 'portal_token';
+  const LS_DEVICE   = 'portal_device_id';
+  const REPO        = 'oavjnp/school_portal';
+  const GH_RAW      = `https://api.github.com/repos/${REPO}/contents/url.txt`;
+
+  function getOrMakeDeviceId() {
+    let id = localStorage.getItem(LS_DEVICE);
+    if (!id) {
+      id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+      localStorage.setItem(LS_DEVICE, id);
     }
-    document.getElementById("f").action=url+"/teacher/login";
-    btn.disabled=false;
-    st.textContent="✓ Connected";
-    setTimeout(function(){st.textContent="";},2000);
-  })
-  .catch(function(){
-    var st=document.getElementById("st");
-    st.className="status error";
-    st.textContent="Could not reach server — check internet.";
+    return id;
+  }
+
+  async function fetchTunnelUrl() {
+    const r = await fetch(GH_RAW, { cache: 'no-store' });
+    const j = await r.json();
+    const url = atob(j.content.replace(/\n/g, '')).trim();
+    if (!url || url.startsWith('#')) throw new Error('Server offline');
+    return url;
+  }
+
+  function showError(msg) {
+    const b = document.getElementById('errorBanner');
+    b.textContent = msg;
+    b.style.display = '';
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('loginForm').style.display = '';
+  }
+
+  function setStatus(msg) {
+    document.getElementById('statusLine').textContent = msg;
+  }
+
+  // Check ?error= param — means server rejected our token
+  const params   = new URLSearchParams(location.search);
+  const errParam = params.get('error');
+  if (errParam) localStorage.removeItem(LS_TOKEN);
+
+  // Try auto-login if we have a stored token and no error
+  const storedToken = localStorage.getItem(LS_TOKEN);
+  if (storedToken && !errParam) {
+    document.getElementById('spinner').style.display = '';
+    try {
+      const tunnelUrl = await fetchTunnelUrl();
+      location.replace(`${tunnelUrl}/teacher/auth?token=${storedToken}`);
+      return;
+    } catch (_) {
+      // Server unreachable — fall through to form
+      localStorage.removeItem(LS_TOKEN);
+      showError('Could not reach the school server. It may be offline. Log in again when it restarts.');
+    }
+  }
+
+  // Show the login form
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('loginForm').style.display = '';
+  if (errParam) showError(decodeURIComponent(errParam.replace(/\+/g, ' ')));
+
+  const deviceId = getOrMakeDeviceId();
+  let tunnelUrl  = null;
+
+  // Fetch tunnel URL in background while teacher fills the form
+  setStatus('Connecting to school server…');
+  fetchTunnelUrl().then(url => {
+    tunnelUrl = url;
+    setStatus('');
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = 'Open Portal →';
+    // Populate name suggestions (best-effort)
+    fetch(`${tunnelUrl}/api/admin/teachers`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : [])
+      .then(teachers => {
+        const dl = document.getElementById('nameList');
+        dl.innerHTML = teachers
+          .filter(t => t.status !== 'inactive')
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map(t => `<option value="${t.name.replace(/"/g, '&quot;')}">`)
+          .join('');
+      }).catch(() => {});
+  }).catch(() => {
+    setStatus('⚠ Server offline — try again later');
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').textContent = 'Try anyway →';
   });
-document.getElementById("f").addEventListener("submit",function(){
-  var btn=document.getElementById("btn");
-  btn.disabled=true;btn.textContent="Opening…";
-});
+
+  document.getElementById('loginForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const name = document.getElementById('nameInput').value.trim();
+    const pwd  = document.getElementById('password').value.trim();
+    if (!name || !pwd) return;
+
+    if (!tunnelUrl) {
+      setStatus('Still connecting…');
+      try { tunnelUrl = await fetchTunnelUrl(); } catch (_) {
+        showError('Cannot reach school server — check that the app is running.');
+        return;
+      }
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+    setStatus('');
+    document.getElementById('errorBanner').style.display = 'none';
+
+    try {
+      const resp = await fetch(`${tunnelUrl}/teacher/login`, {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify({
+          name,
+          password:     pwd,
+          device_id:    deviceId,
+          device_label: navigator.userAgent.slice(0, 120),
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        showError(data.error || 'Login failed');
+        btn.disabled = false;
+        btn.textContent = 'Open Portal →';
+        return;
+      }
+      localStorage.setItem(LS_TOKEN, data.token);
+      location.replace(`${tunnelUrl}/teacher/auth?token=${data.token}`);
+    } catch (err) {
+      showError('Network error — is the app running?');
+      btn.disabled = false;
+      btn.textContent = 'Open Portal →';
+    }
+  });
+})();
 </script>
 </body>
 </html>
