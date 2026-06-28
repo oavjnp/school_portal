@@ -1,1 +1,1 @@
-https://performs-activation-tony-mainstream.trycloudflare.com
+https://api.trycloudflare.com
