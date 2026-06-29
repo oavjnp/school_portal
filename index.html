@@ -30,9 +30,8 @@
       location.replace("login.html");
       return;
     }
-    var API = "https://api.github.com/repos/oavjnp/school_portal/contents/url.txt";
-    fetch(API, {headers:{"Accept":"application/vnd.github.raw+json","X-GitHub-Api-Version":"2022-11-28"}})
-      .then(function(r){ return r.text(); })
+    fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt', {cache:'no-store'})
+      .then(function(r){ return r.ok ? r.text() : Promise.reject(); })
       .then(function(url){
         url = url.trim();
         if (!url || url.charAt(0) === "#") {
