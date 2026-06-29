@@ -95,7 +95,6 @@ window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault();
 (async function () {
   const LS_TOKEN    = 'portal_token';
   const LS_DEVICE   = 'portal_device_id';
-  const REPO        = 'oavjnp/school_portal';
 
   function getOrMakeDeviceId() {
     let id = localStorage.getItem(LS_DEVICE);
@@ -168,17 +167,7 @@ window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault();
     setStatus('');
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitBtn').textContent = 'Open Portal →';
-    // Populate name suggestions (best-effort)
-    fetch(`${tunnelUrl}/api/admin/teachers`, { credentials: 'include' })
-      .then(r => r.ok ? r.json() : [])
-      .then(teachers => {
-        const dl = document.getElementById('nameList');
-        dl.innerHTML = teachers
-          .filter(t => t.status !== 'inactive')
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map(t => `<option value="${t.name.replace(/"/g, '&quot;')}">`)
-          .join('');
-      }).catch(() => {});
+
   }).catch(() => {
     setStatus('⚠ Server offline — try again later');
     document.getElementById('submitBtn').disabled = false;
@@ -247,7 +236,6 @@ function openAdminLogin(e) {
   if (window._tunnelUrl) {
     location.href = window._tunnelUrl + '/login';
   } else {
-    var API = 'https://api.github.com/repos/oavjnp/school_portal/contents/url.txt';
     fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt', {cache:'no-store'})
       .then(function(r){ return r.ok ? r.text() : Promise.reject(); })
       .then(function(url){ url = url.trim(); if (url && url[0] !== '#') location.href = url + '/login'; })
