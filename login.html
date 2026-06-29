@@ -41,6 +41,17 @@
       min-height: 18px;
     }
     #spinner { display: none; text-align: center; padding: 24px; color: #57606a; }
+    .install-bar {
+      display:none; margin-bottom:16px; padding:14px;
+      background:#dff7e9; border:1px solid #6ee7b7; border-radius:8px;
+      font-size:.88rem; color:#166534; text-align:center;
+    }
+    .install-bar button {
+      margin-top:8px; width:100%; padding:9px; border:none; border-radius:6px;
+      font-size:.95rem; font-weight:600; cursor:pointer;
+    }
+    .install-bar .ib-install { background:#1a7f37; color:#fff; margin-bottom:6px; }
+    .install-bar .ib-skip   { background:transparent; color:#166534; font-size:.82rem; border:1px solid #6ee7b7; }
   </style>
 </head>
 <body>
@@ -48,6 +59,7 @@
   <h1>👨‍🏫 Teacher Portal</h1>
   <p class="sub">Odisha Adarsha Vidyalaya</p>
 
+  <div id="installBar" class="install-bar"><strong>📲 Install as app for quick access</strong><button class="ib-install" onclick="doInstall()">Add to Home Screen</button><button class="ib-skip"  onclick="skipInstall()">Continue without installing</button></div>
   <div id="spinner">Signing you in automatically…</div>
 
   <div id="errorBanner" class="error" style="display:none;"></div>
@@ -70,6 +82,9 @@
 </div>
 
 <script>
+var _deferredInstall = null;
+window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault(); _deferredInstall = e; });
+
 (async function () {
   const LS_TOKEN    = 'portal_token';
   const LS_DEVICE   = 'portal_device_id';
@@ -200,7 +215,14 @@
         return;
       }
       localStorage.setItem(LS_TOKEN, data.token);
-      location.replace(`${tunnelUrl}/teacher/auth?token=${data.token}`);
+      var _redirectUrl = `${tunnelUrl}/teacher/auth?token=${data.token}`;
+      if (_deferredInstall) {
+        var bar = document.getElementById('installBar');
+        bar.style.display = '';
+        window._pendingRedirect = _redirectUrl;
+      } else {
+        location.replace(_redirectUrl);
+      }
     } catch (err) {
       showError('Network error — is the app running?');
       btn.disabled = false;
@@ -208,6 +230,14 @@
     }
   });
 })();
+
+function doInstall() {
+  if (_deferredInstall) {
+    _deferredInstall.prompt();
+    _deferredInstall.userChoice.then(function() { location.replace(window._pendingRedirect); });
+  } else { location.replace(window._pendingRedirect); }
+}
+function skipInstall() { location.replace(window._pendingRedirect); }
 </script>
 </body>
 </html>
