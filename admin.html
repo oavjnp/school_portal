@@ -10,45 +10,91 @@
   <link rel="manifest" href="manifest.json">
   <title>Admin Login</title>
   <style>
-    body{font-family:sans-serif;background:#f6f8fa;min-height:100vh;
-         display:flex;align-items:center;justify-content:center;}
-    .card{background:#fff;border:1px solid #d0d7de;border-radius:12px;
-          padding:32px 24px;text-align:center;max-width:320px;width:90%;}
-    .icon{font-size:48px;margin-bottom:12px;}
-    p{font-size:14px;color:#59636e;margin-bottom:20px;}
-    button{width:100%;padding:12px;border:none;border-radius:8px;
-           background:#0969da;color:#fff;font-size:15px;font-weight:600;
-           cursor:pointer;}
-    button:disabled{background:#8ab4f8;cursor:not-allowed;}
-    button.offline{background:#cf222e;}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f8fa; color: #1f2328;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #fff; border: 1px solid #d0d7de; border-radius: 10px;
+      padding: 32px; width: 100%; max-width: 340px;
+    }
+    h1 { font-size: 1.2rem; margin-bottom: 4px; text-align: center; }
+    .sub { color: #57606a; font-size: .88rem; margin-bottom: 24px; text-align: center; }
+    label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: 5px; }
+    input[type=text], input[type=password] {
+      width: 100%; padding: 9px 12px; border: 1px solid #d0d7de; border-radius: 6px;
+      font-size: 1rem; background: #fff; outline: none;
+    }
+    input:focus { border-color: #0969da; box-shadow: 0 0 0 3px rgba(9,105,218,.15); }
+    .field { margin-bottom: 16px; }
+    button {
+      width: 100%; padding: 10px; border: none; border-radius: 6px;
+      background: #0969da; color: #fff; font-size: 1rem; font-weight: 600;
+      cursor: pointer; margin-top: 4px;
+    }
+    button:disabled { background: #8ab4f8; cursor: not-allowed; }
+    button.offline { background: #cf222e; }
+    .status { text-align: center; color: #57606a; font-size: .82rem; margin-top: 12px; min-height: 18px; }
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="icon">🔐</div>
-    <p id="msg">Admin Login</p>
-    <button id="signin" onclick="goSignIn()">Sign in →</button>
+    <h1>🔐 Admin Login</h1>
+    <p class="sub">Student Management System</p>
+
+    <form id="loginForm" method="POST" autocomplete="on">
+      <div class="field">
+        <label for="username">User ID</label>
+        <input type="text" id="username" name="username" placeholder="admin"
+               autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               placeholder="Password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" id="submitBtn" disabled>Connecting…</button>
+      <p class="status" id="statusLine">Connecting to school server…</p>
+    </form>
   </div>
+
   <script>
-  function goSignIn() {
-    var btn = document.getElementById('signin');
-    var msg = document.getElementById('msg');
-    btn.disabled = true;
-    btn.textContent = 'Connecting…';
-    fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt?t='+Date.now(), {cache:'no-store'})
-      .then(function(r){ return r.ok ? r.text() : Promise.reject(); })
-      .then(function(url){
-        url = url.trim();
-        if (!url || url.charAt(0) === "#") { throw new Error('offline'); }
-        location.href = url + "/login";
-      })
-      .catch(function(){
-        msg.textContent = 'Server offline — try again shortly.';
-        btn.disabled = false;
-        btn.textContent = 'Retry';
-        btn.classList.add('offline');
-      });
-  }
+  (function () {
+    var form = document.getElementById('loginForm');
+    var btn  = document.getElementById('submitBtn');
+    var stat = document.getElementById('statusLine');
+
+    function fetchTunnelUrl() {
+      return fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt?t=' + Date.now(),
+        { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+        .then(function (url) {
+          url = url.trim();
+          if (!url || url.charAt(0) === '#') throw new Error('offline');
+          return url;
+        });
+    }
+
+    fetchTunnelUrl().then(function (url) {
+      // Native top-level form POST — not fetch — so it isn't subject to
+      // CORS and the browser's password manager offers to save the
+      // credentials against this stable page.
+      form.action = url + '/login';
+      btn.disabled = false;
+      btn.textContent = 'Sign in →';
+      stat.textContent = '';
+    }).catch(function () {
+      btn.disabled = false;
+      btn.textContent = 'Retry';
+      btn.classList.add('offline');
+      btn.type = 'button';
+      btn.onclick = function () { location.reload(); };
+      stat.textContent = 'Server offline — try again shortly.';
+    });
+  })();
   </script>
 </body>
 </html>
