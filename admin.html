@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Admin Login">
+  <meta name="theme-color" content="#0969da">
+  <link rel="manifest" href="manifest.json">
+  <title>Admin Login</title>
+  <style>
+    body{font-family:sans-serif;background:#f6f8fa;min-height:100vh;
+         display:flex;align-items:center;justify-content:center;}
+    .card{background:#fff;border:1px solid #d0d7de;border-radius:12px;
+          padding:32px 24px;text-align:center;max-width:320px;width:90%;}
+    .icon{font-size:48px;margin-bottom:12px;}
+    p{font-size:14px;color:#59636e;}
+    a.retry{display:none;color:#0969da;font-size:13px;text-decoration:none;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🔐</div>
+    <p id="msg">Opening admin login…</p>
+    <a class="retry" id="retry" href="admin.html">Try again</a>
+  </div>
+  <script>
+  (function() {
+    fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt?t='+Date.now(), {cache:'no-store'})
+      .then(function(r){ return r.ok ? r.text() : Promise.reject(); })
+      .then(function(url){
+        url = url.trim();
+        if (!url || url.charAt(0) === "#") { throw new Error('offline'); }
+        location.replace(url + "/login");
+      })
+      .catch(function(){
+        document.getElementById('msg').textContent = 'Server offline — try again shortly.';
+        document.getElementById('retry').style.display = 'inline-block';
+      });
+  })();
+  </script>
+</body>
+</html>
