@@ -15,30 +15,40 @@
     .card{background:#fff;border:1px solid #d0d7de;border-radius:12px;
           padding:32px 24px;text-align:center;max-width:320px;width:90%;}
     .icon{font-size:48px;margin-bottom:12px;}
-    p{font-size:14px;color:#59636e;}
-    a.retry{display:none;color:#0969da;font-size:13px;text-decoration:none;}
+    p{font-size:14px;color:#59636e;margin-bottom:20px;}
+    button{width:100%;padding:12px;border:none;border-radius:8px;
+           background:#0969da;color:#fff;font-size:15px;font-weight:600;
+           cursor:pointer;}
+    button:disabled{background:#8ab4f8;cursor:not-allowed;}
+    button.offline{background:#cf222e;}
   </style>
 </head>
 <body>
   <div class="card">
     <div class="icon">🔐</div>
-    <p id="msg">Opening admin login…</p>
-    <a class="retry" id="retry" href="admin.html">Try again</a>
+    <p id="msg">Admin Login</p>
+    <button id="signin" onclick="goSignIn()">Sign in →</button>
   </div>
   <script>
-  (function() {
+  function goSignIn() {
+    var btn = document.getElementById('signin');
+    var msg = document.getElementById('msg');
+    btn.disabled = true;
+    btn.textContent = 'Connecting…';
     fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt?t='+Date.now(), {cache:'no-store'})
       .then(function(r){ return r.ok ? r.text() : Promise.reject(); })
       .then(function(url){
         url = url.trim();
         if (!url || url.charAt(0) === "#") { throw new Error('offline'); }
-        location.replace(url + "/login");
+        location.href = url + "/login";
       })
       .catch(function(){
-        document.getElementById('msg').textContent = 'Server offline — try again shortly.';
-        document.getElementById('retry').style.display = 'inline-block';
+        msg.textContent = 'Server offline — try again shortly.';
+        btn.disabled = false;
+        btn.textContent = 'Retry';
+        btn.classList.add('offline');
       });
-  })();
+  }
   </script>
 </body>
 </html>
