@@ -88,6 +88,7 @@
   </p>
 </div>
 
+<script src="tunnel.js"></script>
 <script>
 var _deferredInstall = null;
 window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault(); _deferredInstall = e; });
@@ -106,17 +107,6 @@ window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault();
       localStorage.setItem(LS_DEVICE, id);
     }
     return id;
-  }
-
-  async function fetchTunnelUrl() {
-    const r = await fetch(
-      'https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt?t='+Date.now(),
-      { cache: 'no-store' }
-    );
-    if (!r.ok) throw new Error('Server offline');
-    const url = (await r.text()).trim();
-    if (!url || url.startsWith('#')) throw new Error('Server offline');
-    return url;
   }
 
   function showError(msg) {
@@ -141,13 +131,19 @@ window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault();
   if (storedToken && !errParam) {
     document.getElementById('spinner').style.display = '';
     try {
-      const tunnelUrl = await fetchTunnelUrl();
+      const tunnelUrl = await resolveTunnel({
+        onWaiting: function () {
+          document.getElementById('spinner').textContent =
+            'School server is restarting — reconnecting…';
+        }
+      });
       location.replace(`${tunnelUrl}/teacher/auth?token=${storedToken}`);
       return;
     } catch (_) {
-      // Server unreachable — fall through to form
-      localStorage.removeItem(LS_TOKEN);
-      showError('Could not reach the school server. It may be offline. Log in again when it restarts.');
+      // Six minutes of retrying and still nothing — the server is genuinely
+      // down. Keep the token: it is still valid, and re-typing a password
+      // helps nobody when the server is what is missing.
+      showError('The school server is not reachable right now. Your login is still saved — try again in a few minutes.');
     }
   }
 
@@ -161,15 +157,16 @@ window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault();
 
   // Fetch tunnel URL in background while teacher fills the form
   setStatus('Connecting to school server…');
-  fetchTunnelUrl().then(url => {
+  resolveTunnel({
+    onWaiting: function () { setStatus('School server is restarting — reconnecting…'); }
+  }).then(url => {
     tunnelUrl = url;
     window._tunnelUrl = url;
     setStatus('');
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitBtn').textContent = 'Open Portal →';
-
   }).catch(() => {
-    setStatus('⚠ Server offline — try again later');
+    setStatus('⚠ Server not reachable — try again later');
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitBtn').textContent = 'Try anyway →';
   });
@@ -181,9 +178,10 @@ window.addEventListener('beforeinstallprompt', function(e) { e.preventDefault();
     if (!name || !pwd) return;
 
     if (!tunnelUrl) {
-      setStatus('Still connecting…');
-      try { tunnelUrl = await fetchTunnelUrl(); } catch (_) {
-        showError('Cannot reach school server — check that the app is running.');
+      setStatus('Connecting…');
+      try { tunnelUrl = await resolveTunnel(); } catch (_) {
+        // NB: btn is declared below this block — don't touch it here.
+        showError('Cannot reach the school server — it may be switched off.');
         return;
       }
     }
@@ -236,10 +234,9 @@ function openAdminLogin(e) {
   if (window._tunnelUrl) {
     location.href = window._tunnelUrl + '/login';
   } else {
-    fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt?t='+Date.now(), {cache:'no-store'})
-      .then(function(r){ return r.ok ? r.text() : Promise.reject(); })
-      .then(function(url){ url = url.trim(); if (url && url[0] !== '#') location.href = url + '/login'; })
-      .catch(function(){ alert('Cannot reach server.'); });
+    resolveTunnel()
+      .then(function(url){ location.href = url + '/login'; })
+      .catch(function(){ alert('Cannot reach the school server.'); });
   }
 }
 

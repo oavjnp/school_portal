@@ -23,6 +23,7 @@
     <div class="icon">🏫</div>
     <p id="msg">Opening portal…</p>
   </div>
+  <script src="tunnel.js"></script>
   <script>
   (function() {
     var token = new URLSearchParams(location.search).get("token");
@@ -30,17 +31,19 @@
       location.replace("login.html");
       return;
     }
-    fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt?t='+Date.now(), {cache:'no-store'})
-      .then(function(r){ return r.ok ? r.text() : Promise.reject(); })
-      .then(function(url){
-        url = url.trim();
-        if (!url || url.charAt(0) === "#") {
-          location.replace("login.html?error=Server+offline");
-          return;
-        }
-        location.replace(url + "/teacher/auth?token=" + encodeURIComponent(token));
-      })
-      .catch(function(){ location.replace("login.html?error=Server+unreachable"); });
+    var msg = document.getElementById("msg");
+    resolveTunnel({
+      onWaiting: function () {
+        msg.textContent = "School server is restarting — reconnecting…";
+      },
+      onGiveUp: function () {
+        msg.textContent = "Still unreachable.";
+      }
+    }).then(function (url) {
+      location.replace(url + "/teacher/auth?token=" + encodeURIComponent(token));
+    }).catch(function () {
+      location.replace("login.html?error=Server+unreachable+-+please+try+again+shortly");
+    });
   })();
   </script>
 </body>

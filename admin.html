@@ -61,38 +61,42 @@
     </form>
   </div>
 
+  <script src="tunnel.js"></script>
   <script>
   (function () {
     var form = document.getElementById('loginForm');
     var btn  = document.getElementById('submitBtn');
     var stat = document.getElementById('statusLine');
 
-    function fetchTunnelUrl() {
-      return fetch('https://raw.githubusercontent.com/oavjnp/school_portal/main/url.txt?t=' + Date.now(),
-        { cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
-        .then(function (url) {
-          url = url.trim();
-          if (!url || url.charAt(0) === '#') throw new Error('offline');
-          return url;
-        });
-    }
-
-    fetchTunnelUrl().then(function (url) {
+    function applyUrl(url) {
       // Native top-level form POST — not fetch — so it isn't subject to
       // CORS and the browser's password manager offers to save the
       // credentials against this stable page.
       form.action = url + '/login';
       btn.disabled = false;
       btn.textContent = 'Sign in →';
+      btn.classList.remove('offline');
       stat.textContent = '';
+    }
+
+    resolveTunnel({
+      onWaiting: function () { stat.textContent = 'School server is restarting — reconnecting…'; }
+    }).then(function (url) {
+      applyUrl(url);
+      // The page can sit open on a phone for hours. Re-resolve quietly so a
+      // restart in the meantime doesn't POST the password at a dead host.
+      setInterval(function () {
+        resolveTunnel().then(function (fresh) {
+          if (form.action.indexOf(fresh) !== 0) applyUrl(fresh);
+        }).catch(function () {});
+      }, 120000);
     }).catch(function () {
       btn.disabled = false;
       btn.textContent = 'Retry';
       btn.classList.add('offline');
       btn.type = 'button';
       btn.onclick = function () { location.reload(); };
-      stat.textContent = 'Server offline — try again shortly.';
+      stat.textContent = 'Server not reachable — try again shortly.';
     });
   })();
   </script>
