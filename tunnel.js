@@ -32,11 +32,20 @@
   }
 
   function reachable(url) {
-    // /api/ping is public (no login) and cheap. no-cors means we cannot read
-    // the response, but a resolved promise still proves something answered —
-    // which is all we need to tell "dead hostname" from "server is up".
-    return fetch(url + '/api/ping', { mode: 'no-cors', cache: 'no-store' })
-      .then(function () { return true; })
+    // Must be a real CORS request, not mode:'no-cors'.
+    //
+    // A dead quick-tunnel hostname still answers: Cloudflare's edge serves its
+    // own error 1033 page (HTTP 530) for a tunnel whose origin is gone. An
+    // opaque no-cors fetch RESOLVES for that page, so a no-cors probe reports
+    // a dead host as healthy and the page redirects straight into the 1033.
+    //
+    // /api/ping is public and returns {"ok":true} with an
+    // Access-Control-Allow-Origin header for this site. Cloudflare's error
+    // page carries no such header, so a CORS fetch rejects on a dead host and
+    // resolves only against a live server.
+    return fetch(url + '/api/ping', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (body) { return !!(body && body.ok); })
       .catch(function () { return false; });
   }
 
